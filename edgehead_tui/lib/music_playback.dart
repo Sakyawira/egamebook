@@ -18,8 +18,11 @@ class MusicPlayback {
   Directory? _configDirectory;
   String? _cavaError;
   bool _stopped = false;
+  Future<void>? _startFuture;
 
-  Future<void> start() async {
+  Future<void> start() => _startFuture ??= _start();
+
+  Future<void> _start() async {
     if (!track.existsSync()) {
       message = 'Music file missing: ${track.path}';
       onChanged();
@@ -36,11 +39,11 @@ class MusicPlayback {
         '--',
         track.path,
       ]);
+      _player = player;
       if (_stopped) {
         player.kill();
         return;
       }
-      _player = player;
       unawaited(player.stdout.drain<void>());
       unawaited(player.stderr.drain<void>());
       unawaited(player.exitCode.then((_) {
@@ -87,14 +90,21 @@ channels = mono
 bar_delimiter = 59
 frame_delimiter = 10
 ''');
-      if (_stopped) return;
+      if (_stopped) {
+        try {
+          await directory.delete(recursive: true);
+        } on FileSystemException {
+          // The temporary directory may already have been removed by stop().
+        }
+        return;
+      }
 
       final cava = await Process.start('cava', ['-p', config.path]);
+      _cava = cava;
       if (_stopped) {
         cava.kill();
         return;
       }
-      _cava = cava;
       cava.stdout
           .transform(utf8.decoder)
           .transform(const LineSplitter())
@@ -140,6 +150,27 @@ frame_delimiter = 10
             (_) {},
             onError: (Object _) {},
           ));
+    }
+  }
+
+  /// Wait for startup to finish and for the child processes to exit before
+  /// Nocterm terminates the Dart process.
+  Future<void> stopAndWait() async {
+    stop();
+    final starting = _startFuture;
+    if (starting != null) await starting;
+    await Future.wait([
+      if (_player case final player?) _waitForExit(player),
+      if (_cava case final cava?) _waitForExit(cava),
+    ]);
+  }
+
+  Future<void> _waitForExit(Process process) async {
+    try {
+      await process.exitCode.timeout(const Duration(seconds: 2));
+    } on TimeoutException {
+      process.kill(ProcessSignal.sigkill);
+      await process.exitCode.timeout(const Duration(seconds: 2));
     }
   }
 }

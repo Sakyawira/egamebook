@@ -88,6 +88,7 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
   StoryMusic? _musicCue;
   List<StoryEntry> _shownPreviews = [];
   List<StoryEntry?>? _clearingPreviews;
+  bool _quitting = false;
 
   TuiPresenter get game => component.presenter;
   EdgeheadTheme get theme => component.theme;
@@ -156,7 +157,7 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
     final key = event.logicalKey;
     if (key == LogicalKey.keyQ ||
         (key == LogicalKey.keyC && event.isControlPressed)) {
-      shutdownApp();
+      unawaited(_quit());
       return true;
     }
     if (key == LogicalKey.pageUp) {
@@ -199,6 +200,16 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
       }
     }
     return false;
+  }
+
+  Future<void> _quit() async {
+    if (_quitting) return;
+    _quitting = true;
+    try {
+      await _musicPlayback?.stopAndWait();
+    } finally {
+      shutdownApp();
+    }
   }
 
   void _showSelectedChoice() {
