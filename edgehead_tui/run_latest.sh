@@ -4,10 +4,43 @@ set -euo pipefail
 tui_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 game_dir="$tui_dir/../edgehead"
 
-if ! command -v dart >/dev/null 2>&1; then
-  echo 'Dart is not on PATH. Install the Dart SDK or Flutter first.' >&2
-  exit 127
+required=(dart)
+if [[ "${1:-}" != '--build-only' ]]; then
+  required+=(mpv cava)
 fi
+
+missing=()
+for package in "${required[@]}"; do
+  if ! command -v "$package" >/dev/null 2>&1; then
+    missing+=("$package")
+  fi
+done
+
+if (( ${#missing[@]} > 0 )); then
+  if [[ "$(uname -s)" == Linux ]] && command -v pacman >/dev/null 2>&1; then
+    if (( EUID == 0 )); then
+      echo 'Run this script as your normal user; it will ask for sudo when packages are missing.' >&2
+      exit 1
+    fi
+    if ! command -v sudo >/dev/null 2>&1; then
+      echo 'sudo is required to install the missing packages: '"${missing[*]}" >&2
+      exit 127
+    fi
+    echo 'Installing missing TUI dependencies: '"${missing[*]}"
+    sudo pacman -Syu --needed "${missing[@]}"
+  else
+    echo 'Missing TUI dependencies: '"${missing[*]}" >&2
+    echo 'Install them and run this script again.' >&2
+    exit 127
+  fi
+fi
+
+for package in "${required[@]}"; do
+  if ! command -v "$package" >/dev/null 2>&1; then
+    echo "$package is still not on PATH after installation." >&2
+    exit 127
+  fi
+done
 
 cd "$game_dir"
 if [[ ! -f .dart_tool/package_config.json ]]; then

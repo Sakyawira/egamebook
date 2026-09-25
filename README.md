@@ -11,7 +11,10 @@ example of an egamebook, and it provides a way of running the game
 in terminal. Go read Edgehead's [README][] to learn more about playing,
 playtesting, and developing Edgehead.
 
-For a full-screen terminal interface, see [Edgehead TUI](edgehead_tui/README.md).
+To start the full-screen Edgehead game from the repository root, run
+`./run_latest.sh`. On CachyOS or Arch Linux it installs any missing Dart, mpv,
+and Cava packages with pacman before building the story and starting the TUI.
+See [Edgehead TUI](edgehead_tui/README.md) for details.
 
 If you're thinking of building your own egamebook, the easiest way to start
 is to make a copy of the `edgehead` subdirectory and start changing

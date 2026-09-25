@@ -5,11 +5,18 @@ and reads preview cues from its story files.
 
 ## Run
 
-From this directory, run:
+Clone the repository and run `./run_latest.sh` from its root, or run this from
+`edgehead_tui/`:
 
 ```sh
 ./run_latest.sh
 ```
+
+On CachyOS or Arch Linux, the launcher uses `sudo pacman -Syu --needed` to
+install missing `dart`, `mpv`, and `cava` packages before compiling and starting
+the game. Pacman asks you to approve its transaction. Dart then downloads the
+project packages on first run. `--build-only` needs only Dart. On other systems,
+install any missing tools yourself before running the launcher.
 
 Story text controls preview panels with these cues:
 
@@ -52,7 +59,7 @@ For repeated edits, `dart run build_runner watch --delete-conflicting-outputs`
 keeps the generated code up to date; the TUI still needs a restart to load it.
 
 Music files are read from `assets/audio/`, and images from `assets/images/`.
-Install `mpv` and `cava` for music and the live spectrum. Cava reads audio
+The launcher checks for `mpv` and `cava` for music and the live spectrum. Cava reads audio
 through CoreAudio tap on macOS or PipeWire on Linux. Images use the terminal's
 image protocol (iTerm2 or Kitty, with a Unicode fallback). The bundled track
 can be regenerated with `python3 tools/generate_intro.py` and `ffmpeg`.
