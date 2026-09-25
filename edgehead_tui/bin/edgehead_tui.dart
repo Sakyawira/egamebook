@@ -212,7 +212,7 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
   Component _panel(String title, Component body, {Color? color}) {
     final panelColor = color ?? theme['story'];
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 1),
+      padding: const EdgeInsets.only(left: 1, right: 1, top: 1),
       decoration: BoxDecoration(
         border: BoxBorder.all(color: panelColor),
         title: BorderTitle(
@@ -310,6 +310,7 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
       'ILLUSTRATION',
       LayoutBuilder(
         builder: (context, constraints) => Align(
+          alignment: Alignment.bottomCenter,
           child: _storyImage(
             illustration.description,
             illustration.source,
