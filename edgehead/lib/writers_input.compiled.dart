@@ -25012,7 +25012,7 @@ final startInkInk = InkAst([
     final WorldStateBuilder w = c.outputWorld;
     final Storyline s = c.outputStoryline;
     s.add(
-      '[Illustration: figure.txt]\n',
+      '[Illustration: figure.txt]\n[Music: Close]\n[Music: thrilling.m4a]\n',
       isRaw: true,
     );
   }),
@@ -25024,7 +25024,7 @@ final startInkInk = InkAst([
     final WorldStateBuilder w = c.outputWorld;
     final Storyline s = c.outputStoryline;
     s.add(
-      'A goblin, bloodlust in his eyes, emerges from his hiding place to stand a few paces in front of us. I look around to see if there are more, but no. He is alone.\n',
+      'It is alone.\n',
       isRaw: true,
     );
   }),

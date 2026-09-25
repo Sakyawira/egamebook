@@ -148,8 +148,10 @@ Amy has just finished telling me, for the hundredth time, what a strange thing t
 A momment later. A screeching noise made us turn our heads towards a field, and there, barely visible as to obscured by the densed fog - a figure.
 
 [Illustration: figure.txt]
+[Music: Close]
+[Music: thrilling.m4a]
 
-A goblin, bloodlust in his eyes, emerges from his hiding place to stand a few paces in front of us. I look around to see if there are more, but no. He is alone.
+It is alone.
 
 * Run ((This is a goblin: a killing machine. No one would fault me for fleeing a fight I will hardly win.))
 
