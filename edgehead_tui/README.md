@@ -12,6 +12,13 @@ dart pub get
 dart run bin/edgehead_tui.dart
 ```
 
+The opening plays an original looping forest theme and shows live Cava bars in
+the Illustration pane. Install `mpv` and `cava` for this feature. Cava reads the
+audio output through CoreAudio tap on macOS or PipeWire on Linux; it does not
+draw directly to the terminal. The music and visualizer stop when the first
+story illustration appears, and the goblin image takes their place. The bundled
+track can be regenerated with `python3 tools/generate_intro.py` and `ffmpeg`.
+
 Story passages can include Markdown images such as
 `![Illustration of Darg](darg.png)`. The TUI shows a caption in the story and,
 when space allows, opens a separate Illustration preview pane beneath Status.

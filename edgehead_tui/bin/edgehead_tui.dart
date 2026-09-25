@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:edgehead/edgehead_lib.dart';
 import 'package:edgehead/egamebook/elements/elements.dart';
+import 'package:edgehead_tui/opening_music.dart';
 import 'package:edgehead_tui/tui_presenter.dart';
 import 'package:nocterm/nocterm.dart';
 
@@ -44,20 +45,36 @@ class EdgeheadScreen extends StatefulComponent {
 class _EdgeheadScreenState extends State<EdgeheadScreen> {
   final AutoScrollController _storyScroll = AutoScrollController();
   final ScrollController _choiceScroll = ScrollController();
+  late final OpeningMusic _openingMusic;
+  bool _openingVisible = true;
 
   TuiPresenter get game => component.presenter;
 
   @override
   void initState() {
     super.initState();
+    _openingMusic = OpeningMusic(
+      track: File.fromUri(
+          Platform.script.resolve('../assets/audio/forest_intro.m4a')),
+      onChanged: () {
+        if (mounted && _openingVisible) setState(() {});
+      },
+    );
     game.onChanged = () {
+      if (_openingVisible &&
+          (game.activeIllustration != null || game.ending != null)) {
+        _openingVisible = false;
+        _openingMusic.stop();
+      }
       if (mounted) setState(() {});
     };
+    unawaited(_openingMusic.start());
     scheduleMicrotask(game.startBook);
   }
 
   @override
   void dispose() {
+    _openingMusic.stop();
     game.onChanged = null;
     _storyScroll.dispose();
     _choiceScroll.dispose();
@@ -217,6 +234,56 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
     );
   }
 
+  Component _musicPanel() {
+    return _panel(
+      'ILLUSTRATION',
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('♫ FOREST INTRO',
+              style: TextStyle(color: Colors.brightCyan)),
+          const SizedBox(height: 1),
+          Expanded(
+            child: _openingMusic.message == null
+                ? LayoutBuilder(
+                    builder: (context, constraints) {
+                      final width = constraints.maxWidth.floor();
+                      final height = constraints.maxHeight.floor();
+                      final bars = (width ~/ 2).clamp(1, 24);
+                      final levels = _openingMusic.levels;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (var row = 0; row < height; row++)
+                            Text(
+                              List.generate(bars, (index) {
+                                final source =
+                                    ((index + 0.5) * levels.length / bars)
+                                        .floor();
+                                final threshold =
+                                    ((height - row) * 1000 / height).round();
+                                return levels[source] >= threshold
+                                    ? '█ '
+                                    : '  ';
+                              }).join(),
+                              style: TextStyle(
+                                  color: row < height ~/ 3
+                                      ? Colors.brightCyan
+                                      : Colors.brightGreen),
+                            ),
+                        ],
+                      );
+                    },
+                  )
+                : Text(_openingMusic.message!),
+          ),
+          const Text('mpv · cava', style: TextStyle(color: Colors.brightBlack)),
+        ],
+      ),
+      color: Colors.brightGreen,
+    );
+  }
+
   Component _interactionPanel() {
     final machine = game.slotMachine;
     if (machine != null) {
@@ -294,7 +361,8 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
                 builder: (context, constraints) {
                   final illustration = game.activeIllustration;
                   final showPreview =
-                      illustration != null && constraints.maxHeight >= 18;
+                      (_openingVisible || illustration != null) &&
+                          constraints.maxHeight >= 18;
                   final sidebarWidth = showPreview
                       ? (constraints.maxWidth * 0.36)
                           .clamp(30.0, 50.0)
@@ -314,7 +382,10 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
                                   SizedBox(height: 8, child: _statusPanel()),
                                   const SizedBox(height: 1),
                                   Expanded(
-                                      child: _illustrationPanel(illustration)),
+                                    child: illustration == null
+                                        ? _musicPanel()
+                                        : _illustrationPanel(illustration),
+                                  ),
                                 ],
                               )
                             : _statusPanel(),
