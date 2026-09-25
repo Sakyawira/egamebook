@@ -11,6 +11,8 @@ example of an egamebook, and it provides a way of running the game
 in terminal. Go read Edgehead's [README][] to learn more about playing,
 playtesting, and developing Edgehead.
 
+For a full-screen terminal interface, see [Edgehead TUI](edgehead_tui/README.md).
+
 If you're thinking of building your own egamebook, the easiest way to start
 is to make a copy of the `edgehead` subdirectory and start changing
 the text files and the Dart files there.
