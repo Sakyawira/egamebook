@@ -15,7 +15,7 @@ dart run bin/edgehead_tui.dart
 Story text controls preview panels with these cues:
 
 ```text
-[Music: forest_intro.m4a]
+[Music: haunting_intro.m4a]
 [Illustration: goblin.png]
 [Close: Illustration]
 [Close: Music]

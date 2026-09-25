@@ -24661,7 +24661,7 @@ final startInkInk = InkAst([
     final WorldStateBuilder w = c.outputWorld;
     final Storyline s = c.outputStoryline;
     s.add(
-      '[Music: forest_intro.m4a]\n',
+      '[Music: haunting_intro.m4a]\n',
       isRaw: true,
     );
   }),
