@@ -8,12 +8,10 @@ class MusicPlayback {
   MusicPlayback({
     required this.track,
     required this.onChanged,
-    this.limitSpectrumRedraws,
   });
 
   final File track;
   final void Function() onChanged;
-  final bool Function()? limitSpectrumRedraws;
 
   List<int> levels = List<int>.filled(24, 0);
   String? message;
@@ -24,7 +22,6 @@ class MusicPlayback {
   String? _cavaError;
   bool _stopped = false;
   Future<void>? _startFuture;
-  DateTime? _lastSpectrumRedraw;
 
   Future<void> start() => _startFuture ??= _start();
 
@@ -142,17 +139,6 @@ frame_delimiter = 10
     final parsed = values.map(int.tryParse).toList();
     if (parsed.any((value) => value == null)) return;
     levels = parsed.map((value) => value!.clamp(0, 1000)).toList();
-    if (limitSpectrumRedraws?.call() ?? false) {
-      final now = DateTime.now();
-      if (_lastSpectrumRedraw != null &&
-          now.difference(_lastSpectrumRedraw!) <
-              const Duration(milliseconds: 200)) {
-        return;
-      }
-      _lastSpectrumRedraw = now;
-    } else {
-      _lastSpectrumRedraw = null;
-    }
     onChanged();
   }
 

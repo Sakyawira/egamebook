@@ -58,7 +58,7 @@ elif [[ "$game_dir/pubspec.yaml" -nt "$story_stamp" ||
         "$game_dir/.dart_tool/package_config.json" -nt "$story_stamp" ||
         "$tui_dir/../egamebook_builder/pubspec.yaml" -nt "$story_stamp" ]]; then
   needs_story_build=true
-elif [[ -n "$(find "$game_dir/assets/text" "$game_dir/lib" \
+elif [[ -n "$(find "$game_dir/assets/text" \
     "$tui_dir/../egamebook_builder/lib" -type f -newer "$story_stamp" \
     -print -quit)" ]]; then
   needs_story_build=true
@@ -68,6 +68,8 @@ if [[ "$needs_story_build" == true ]]; then
   echo 'Compiling the latest .egb.txt story edits...'
   dart run build_runner build --delete-conflicting-outputs
   touch "$story_stamp"
+else
+  echo 'Story files unchanged; using the cached story build.'
 fi
 
 if [[ "${1:-}" == '--build-only' ]]; then
@@ -98,6 +100,8 @@ fi
 if [[ "$needs_compile" == true ]]; then
   echo 'Compiling TUI executable (first run or story/code changed)...'
   dart compile exe bin/edgehead_tui.dart -o "$binary"
+else
+  echo 'Dart sources unchanged; using the cached TUI executable.'
 fi
 
 echo 'Starting Edgehead TUI with the updated story...'

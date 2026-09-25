@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:edgehead/edgehead_lib.dart';
 import 'package:edgehead/egamebook/elements/elements.dart';
 import 'package:edgehead_tui/edgehead_theme.dart';
+import 'package:edgehead_tui/iterm_png_image.dart';
 import 'package:edgehead_tui/music_playback.dart';
 import 'package:edgehead_tui/tui_presenter.dart';
 import 'package:nocterm/nocterm.dart';
@@ -87,6 +88,7 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
   MusicPlayback? _musicPlayback;
   StoryMusic? _musicCue;
   final Map<String, String?> _asciiArtCache = {};
+  final Map<String, ITermPngAsset?> _itermPngCache = {};
   List<StoryEntry> _shownPreviews = [];
   List<StoryEntry?>? _clearingPreviews;
   bool _quitting = false;
@@ -109,12 +111,6 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
           final playback = MusicPlayback(
             track: File.fromUri(
                 component.audioDirectory.uri.resolve(music.source)),
-            limitSpectrumRedraws: () =>
-                (Platform.environment['TERM_PROGRAM'] ?? '')
-                    .toLowerCase()
-                    .contains('iterm') &&
-                game.activePreviews.whereType<StoryImage>().any(
-                    (image) => !image.source.toLowerCase().endsWith('.txt')),
             onChanged: () {
               if (mounted && identical(_musicCue, music)) setState(() {});
             },
@@ -352,6 +348,13 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
       if (file.path.toLowerCase().endsWith('.txt')) {
         return _asciiIllustration(file, width, height, fallback);
       }
+      if (_isITerm && file.path.toLowerCase().endsWith('.png')) {
+        final asset = _itermPngCache.putIfAbsent(
+            file.path, () => ITermPngAsset.load(file));
+        if (asset != null) {
+          return ITermPngImage(asset: asset, height: height);
+        }
+      }
       // ignore: experimental_member_use
       image = Image.file(
         file.path,
@@ -362,6 +365,14 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
       );
     }
     return image;
+  }
+
+  bool get _isITerm {
+    final environment = Platform.environment;
+    return (environment['TERM_PROGRAM'] ?? '')
+            .toLowerCase()
+            .contains('iterm') ||
+        environment.containsKey('ITERM_SESSION_ID');
   }
 
   Component _statusPanel() {
