@@ -24661,7 +24661,7 @@ final startInkInk = InkAst([
     final WorldStateBuilder w = c.outputWorld;
     final Storyline s = c.outputStoryline;
     s.add(
-      '[music: Forest Intro](forest_intro.m4a)\n',
+      '[Music: forest_intro.m4a]\n',
       isRaw: true,
     );
   }),
@@ -25012,7 +25012,7 @@ final startInkInk = InkAst([
     final WorldStateBuilder w = c.outputWorld;
     final Storyline s = c.outputStoryline;
     s.add(
-      '![Illustration of a ferocious goblin is stepping out of a bush, holding a sword](goblin.png)\n',
+      '[Illustration: goblin.png]\n',
       isRaw: true,
     );
   }),
@@ -25505,6 +25505,10 @@ final Room meadowFight = Room(
         : '''Tamara checks her gear and sheathes her sword. Then she looks at me.''';
     final ifBlock_781966055 =
         c.isHurt(tamaraId) ? '''She slowly stands up, and shrugs.''' : '''''';
+    s.add(
+      '[Close: Illustration]\n[Close: Music]\n\n',
+      isRaw: true,
+    );
     w.updateActorById(firstGoblinId, (b) => b.initiative = 10);
 
     s.add(

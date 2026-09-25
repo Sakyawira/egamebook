@@ -23,7 +23,7 @@ FOR_LOCATION: $start_bogus_location
 COMMAND: N/A
 
 INK:
-[music: Forest Intro](forest_intro.m4a)
+[Music: forest_intro.m4a]
 
 I am finally here, in the ancient ruins of San Francisco. I have reached my destination at last. My brother is here, somewhere in this dense forest, among fragments of a long-lost civilization.
 
@@ -148,7 +148,7 @@ Tamara has just finished telling me, for the hundredth time, what a stupid idea 
 
 Then of course, a moment later, I'm proven wrong.
 
-![Illustration of a ferocious goblin is stepping out of a bush, holding a sword](goblin.png)
+[Illustration: goblin.png]
 
 A goblin, bloodlust in his eyes, emerges from his hiding place to stand a few paces in front of us. I look around to see if there are more, but no. He is alone.
 

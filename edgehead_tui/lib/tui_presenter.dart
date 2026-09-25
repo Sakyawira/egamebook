@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:edgehead/edgehead_lib.dart';
-import 'package:edgehead/edgehead_ids.dart';
 import 'package:edgehead/egamebook/commands/commands.dart';
 import 'package:edgehead/egamebook/elements/elements.dart';
 import 'package:edgehead/egamebook/presenter.dart';
@@ -33,7 +32,7 @@ class StoryMusic extends StoryEntry {
 
 class TuiPresenter extends Presenter<EdgeheadGame> {
   static final RegExp _mediaCue = RegExp(
-    r'!\[([^\]]*)\]\(([^)\s]+)\)|\[music:\s*([^\]]+)\]\(([^)\s]+)\)',
+    r'!\[([^\]]*)\]\(([^)\s]+)\)|\[music:\s*([^\]]+)\]\(([^)\s]+)\)|\[(illustration|music|close):\s*([^\]]+)\]',
     caseSensitive: false,
   );
 
@@ -42,19 +41,15 @@ class TuiPresenter extends Presenter<EdgeheadGame> {
 
   final List<StoryEntry> story = [];
   final Map<String, int> stats = {};
-  StoryImage? _activeIllustration;
-  StoryMusic? _activeMusic;
+  final List<StoryEntry> _activePreviews = [];
 
-  StoryMusic? get activeMusic => _activeMusic;
+  List<StoryEntry> get activePreviews => List.unmodifiable(_activePreviews);
 
-  StoryImage? get activeIllustration {
-    final illustration = _activeIllustration;
-    if (illustration?.source == 'goblin.png' &&
-        book?.world.wasKilled(firstGoblinId) == true) {
-      _activeIllustration = null;
-      return null;
+  StoryMusic? get activeMusic {
+    for (final preview in _activePreviews.reversed) {
+      if (preview is StoryMusic) return preview;
     }
-    return illustration;
+    return null;
   }
 
   void Function()? onChanged;
@@ -80,13 +75,43 @@ class TuiPresenter extends Presenter<EdgeheadGame> {
       if (match.group(1) != null) {
         final illustration = StoryImage(match.group(1)!, match.group(2)!);
         story.add(illustration);
-        _activeIllustration = illustration;
-        _activeMusic = null;
-      } else {
+        _activePreviews.removeWhere((preview) => preview is StoryImage);
+        _activePreviews.add(illustration);
+      } else if (match.group(3) != null) {
         final music = StoryMusic(match.group(3)!.trim(), match.group(4)!);
         story.add(music);
-        _activeMusic = music;
-        _activeIllustration = null;
+        _activePreviews.removeWhere((preview) => preview is StoryMusic);
+        _activePreviews.add(music);
+      } else {
+        final kind = match.group(5)!.toLowerCase();
+        final value = match.group(6)!.trim();
+        switch (kind) {
+          case 'illustration':
+            final illustration = StoryImage(value, value);
+            story.add(illustration);
+            _activePreviews.add(illustration);
+          case 'music':
+            final title = value
+                .split('/')
+                .last
+                .replaceFirst(RegExp(r'\.[^.]+$'), '')
+                .replaceAll('_', ' ');
+            final music = StoryMusic(title, value);
+            story.add(music);
+            _activePreviews.removeWhere((preview) => preview is StoryMusic);
+            _activePreviews.add(music);
+          case 'close':
+            switch (value.toLowerCase()) {
+              case 'illustration':
+                _activePreviews.removeWhere((preview) => preview is StoryImage);
+              case 'music':
+                _activePreviews.removeWhere((preview) => preview is StoryMusic);
+              case 'all':
+                _activePreviews.clear();
+              default:
+                _appendStoryText(match.group(0)!);
+            }
+        }
       }
       start = match.end;
     }
@@ -230,16 +255,14 @@ class TuiPresenter extends Presenter<EdgeheadGame> {
   @override
   void addWin(WinGame win) {
     ending = 'YOU WIN';
-    _activeIllustration = null;
-    _activeMusic = null;
+    _activePreviews.clear();
     _appendStory(win.markdownText);
   }
 
   @override
   void addLose(LoseGame lose) {
     ending = 'GAME OVER';
-    _activeIllustration = null;
-    _activeMusic = null;
+    _activePreviews.clear();
     _appendStory(lose.markdownText);
   }
 

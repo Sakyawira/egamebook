@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:edgehead/edgehead_lib.dart';
 import 'package:edgehead/egamebook/elements/elements.dart';
+import 'package:edgehead_tui/edgehead_theme.dart';
 import 'package:edgehead_tui/music_playback.dart';
 import 'package:edgehead_tui/tui_presenter.dart';
 import 'package:nocterm/nocterm.dart';
@@ -10,7 +11,7 @@ import 'package:nocterm/nocterm.dart';
 Future<void> main(List<String> args) async {
   if (args.length.isOdd) {
     stderr.writeln(
-        'Usage: dart run bin/edgehead_tui.dart [--image-dir PATH] [--audio-dir PATH]');
+        'Usage: dart run bin/edgehead_tui.dart [--image-dir PATH] [--audio-dir PATH] [--theme PATH]');
     exitCode = 64;
     return;
   }
@@ -18,17 +19,32 @@ Future<void> main(List<String> args) async {
       Directory.fromUri(Platform.script.resolve('../assets/images/'));
   var audioDirectory =
       Directory.fromUri(Platform.script.resolve('../assets/audio/'));
+  var themeFile = File.fromUri(Platform.script.resolve('../theme.json'));
   for (var index = 0; index < args.length; index += 2) {
     switch (args[index]) {
       case '--image-dir':
         imageDirectory = Directory(args[index + 1]).absolute;
       case '--audio-dir':
         audioDirectory = Directory(args[index + 1]).absolute;
+      case '--theme':
+        themeFile = File(args[index + 1]).absolute;
       default:
         stderr.writeln('Unknown option: ${args[index]}');
         exitCode = 64;
         return;
     }
+  }
+  final EdgeheadTheme theme;
+  try {
+    theme = EdgeheadTheme.load(themeFile);
+  } on FormatException catch (error) {
+    stderr.writeln('Invalid theme: ${error.message}');
+    exitCode = 65;
+    return;
+  } on FileSystemException catch (error) {
+    stderr.writeln('Could not read theme: ${error.message}');
+    exitCode = 66;
+    return;
   }
   final presenter = TuiPresenter();
   await presenter.initialize(EdgeheadGame(randomizeAfterPlayerChoice: false));
@@ -38,6 +54,7 @@ Future<void> main(List<String> args) async {
         presenter: presenter,
         imageDirectory: imageDirectory,
         audioDirectory: audioDirectory,
+        theme: theme,
       ),
       enableHotReload: false,
     );
@@ -51,12 +68,14 @@ class EdgeheadScreen extends StatefulComponent {
     required this.presenter,
     required this.imageDirectory,
     required this.audioDirectory,
+    required this.theme,
     super.key,
   });
 
   final TuiPresenter presenter;
   final Directory imageDirectory;
   final Directory audioDirectory;
+  final EdgeheadTheme theme;
 
   @override
   State<EdgeheadScreen> createState() => _EdgeheadScreenState();
@@ -67,16 +86,17 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
   final ScrollController _choiceScroll = ScrollController();
   MusicPlayback? _musicPlayback;
   StoryMusic? _musicCue;
-  StoryImage? _visibleIllustration;
-  bool _clearingIllustration = false;
+  List<StoryEntry> _shownPreviews = [];
+  List<StoryEntry?>? _clearingPreviews;
 
   TuiPresenter get game => component.presenter;
+  EdgeheadTheme get theme => component.theme;
 
   @override
   void initState() {
     super.initState();
     game.onChanged = () {
-      final illustration = game.activeIllustration;
+      final previews = game.activePreviews;
       final music = game.activeMusic;
       if (!identical(_musicCue, music)) {
         _musicPlayback?.stop();
@@ -95,15 +115,29 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
           unawaited(playback.start());
         }
       }
-      if (_visibleIllustration != null && illustration == null) {
-        // Nocterm clears a native image after painting the next frame. Keep
-        // the preview's geometry for that frame, then let the story expand.
-        _clearingIllustration = true;
+      if (_clearingPreviews == null &&
+          _shownPreviews
+              .whereType<StoryImage>()
+              .any((oldImage) => !previews.contains(oldImage))) {
+        // Native image cleanup runs after Nocterm paints the next frame.
+        // Keep empty slots for one frame before resizing the preview column.
+        _clearingPreviews = _shownPreviews
+            .map<StoryEntry?>((preview) =>
+                preview is StoryImage && !previews.contains(preview)
+                    ? null
+                    : preview)
+            .toList();
         TerminalBinding.instance.addPostFrameCallback((_) {
-          if (mounted) setState(() => _clearingIllustration = false);
+          if (mounted) {
+            setState(() {
+              _clearingPreviews = null;
+              _shownPreviews = game.activePreviews;
+            });
+          }
         });
+      } else if (_clearingPreviews == null) {
+        _shownPreviews = previews;
       }
-      _visibleIllustration = illustration;
       if (mounted) setState(() {});
     };
     scheduleMicrotask(game.startBook);
@@ -175,15 +209,16 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
     });
   }
 
-  Component _panel(String title, Component body, {Color color = Colors.blue}) {
+  Component _panel(String title, Component body, {Color? color}) {
+    final panelColor = color ?? theme['story'];
     return Container(
       padding: const EdgeInsets.all(1),
-      decoration: BoxDecoration(border: BoxBorder.all(color: color)),
+      decoration: BoxDecoration(border: BoxBorder.all(color: panelColor)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(title,
-              style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+              style: TextStyle(color: panelColor, fontWeight: FontWeight.bold)),
           const SizedBox(height: 1),
           Expanded(child: body),
         ],
@@ -202,14 +237,15 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
           return Container(
             padding: const EdgeInsets.only(bottom: 1),
             child: switch (entry) {
-              StoryText(:final text) => Text(text),
+              StoryText(:final text) =>
+                Text(text, style: TextStyle(color: theme['text'])),
               StoryImage(:final description) => Text(
                   '[Illustration: $description]',
-                  style: const TextStyle(color: Colors.brightGreen),
+                  style: TextStyle(color: theme['illustration']),
                 ),
               StoryMusic(:final title) => Text(
                   '♫ $title',
-                  style: const TextStyle(color: Colors.brightCyan),
+                  style: TextStyle(color: theme['music']),
                 ),
             },
           );
@@ -220,7 +256,8 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
 
   Component _storyImage(String description, String source) {
     final uri = Uri.tryParse(source);
-    final fallback = Text('[Illustration: $description] ($source)');
+    final fallback = Text('[Illustration: $description] ($source)',
+        style: TextStyle(color: theme['muted']));
     final Component image;
     if (uri != null && (uri.scheme == 'https' || uri.scheme == 'http')) {
       // Nocterm's image widget is experimental, but it owns terminal redraws.
@@ -254,16 +291,15 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Stamina  $stamina'),
-          Text('Sanity   $sanity'),
+          Text('Stamina  $stamina', style: TextStyle(color: theme['text'])),
+          Text('Sanity   $sanity', style: TextStyle(color: theme['text'])),
           if (game.ending != null)
-            Text(game.ending!,
-                style: const TextStyle(color: Colors.brightYellow)),
+            Text(game.ending!, style: TextStyle(color: theme['warning'])),
           if (game.error != null)
-            Text(game.error!, style: const TextStyle(color: Colors.brightRed)),
+            Text(game.error!, style: TextStyle(color: theme['error'])),
         ],
       ),
-      color: Colors.cyan,
+      color: theme['status'],
     );
   }
 
@@ -274,19 +310,19 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
         padding: const EdgeInsets.all(2),
         child: _storyImage(illustration.description, illustration.source),
       ),
-      color: Colors.brightGreen,
+      color: theme['illustration'],
     );
   }
 
   Component _musicPanel(StoryMusic music) {
     final playback = _musicPlayback;
     return _panel(
-      'ILLUSTRATION',
+      'MUSIC',
       Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text('♫ ${music.title.toUpperCase()}',
-              style: const TextStyle(color: Colors.brightCyan)),
+              style: TextStyle(color: theme['music'])),
           const SizedBox(height: 1),
           Expanded(
             child: playback?.message == null
@@ -314,8 +350,8 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
                               }).join(),
                               style: TextStyle(
                                   color: row < height ~/ 3
-                                      ? Colors.brightCyan
-                                      : Colors.brightGreen),
+                                      ? theme['spectrumHigh']
+                                      : theme['spectrumLow']),
                             ),
                         ],
                       );
@@ -323,10 +359,10 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
                   )
                 : Text(playback!.message!),
           ),
-          const Text('mpv · cava', style: TextStyle(color: Colors.brightBlack)),
+          Text('mpv · cava', style: TextStyle(color: theme['muted'])),
         ],
       ),
-      color: Colors.brightGreen,
+      color: theme['music'],
     );
   }
 
@@ -338,18 +374,20 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(machine.rollReason),
+            Text(machine.rollReason, style: TextStyle(color: theme['text'])),
             Text(
-                'Chance ${((game.activeRollChance ?? machine.probability) * 100).toStringAsFixed(1)}%'),
+                'Chance ${((game.activeRollChance ?? machine.probability) * 100).toStringAsFixed(1)}%',
+                style: TextStyle(color: theme['text'])),
             const SizedBox(height: 1),
             Text(game.rollDisplay ?? 'Preparing roll...',
-                style: const TextStyle(color: Colors.brightYellow)),
+                style: TextStyle(color: theme['warning'])),
             if (game.awaitingReroll)
               Text(
-                  'Reroll? Y / N  (${machine.rerollEffectDescription ?? 'use a resource'})'),
+                  'Reroll? Y / N  (${machine.rerollEffectDescription ?? 'use a resource'})',
+                  style: TextStyle(color: theme['text'])),
           ],
         ),
-        color: Colors.yellow,
+        color: theme['roll'],
       );
     }
 
@@ -357,9 +395,11 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
     if (block == null) {
       return _panel(
           'CHOICES',
-          Text(game.ending == null
-              ? 'The story is unfolding...'
-              : 'Press Q to quit.'));
+          Text(
+              game.ending == null
+                  ? 'The story is unfolding...'
+                  : 'Press Q to quit.',
+              style: TextStyle(color: theme['text'])));
     }
     return _panel(
       'CHOICES',
@@ -376,14 +416,14 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
             child: Text(
               '${selected ? '>' : ' '} ${index + 1}. $label  ($chance)',
               style: TextStyle(
-                color: selected ? Colors.brightYellow : Colors.white,
+                color: selected ? theme['selected'] : theme['text'],
                 fontWeight: selected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           );
         },
       ),
-      color: Colors.yellow,
+      color: theme['choices'],
     );
   }
 
@@ -397,20 +437,25 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('EDGEHEAD',
+            Text('EDGEHEAD',
                 style: TextStyle(
-                    color: Colors.brightCyan, fontWeight: FontWeight.bold)),
+                    color: theme['title'], fontWeight: FontWeight.bold)),
             const SizedBox(height: 1),
             Expanded(
               flex: 3,
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final illustration = game.activeIllustration;
-                  final music = game.activeMusic;
-                  final showPreview = (music != null ||
-                          illustration != null ||
-                          _clearingIllustration) &&
-                      constraints.maxHeight >= 18;
+                  final List<StoryEntry?> previews =
+                      _clearingPreviews ?? _shownPreviews;
+                  final capacity = (constraints.maxHeight.floor() - 8) ~/ 12;
+                  final visibleCount = capacity < 0
+                      ? 0
+                      : capacity > previews.length
+                          ? previews.length
+                          : capacity;
+                  final visiblePreviews =
+                      previews.skip(previews.length - visibleCount).toList();
+                  final showPreview = visiblePreviews.isNotEmpty;
                   final sidebarWidth = showPreview
                       ? (constraints.maxWidth * 0.36)
                           .clamp(30.0, 50.0)
@@ -428,16 +473,21 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   SizedBox(height: 8, child: _statusPanel()),
-                                  const SizedBox(height: 1),
-                                  Expanded(
-                                    child: illustration != null
-                                        ? _illustrationPanel(illustration)
-                                        : _clearingIllustration
-                                            ? _panel('ILLUSTRATION',
-                                                const SizedBox(),
-                                                color: Colors.brightGreen)
-                                            : _musicPanel(music!),
-                                  ),
+                                  for (final preview in visiblePreviews) ...[
+                                    const SizedBox(height: 1),
+                                    Expanded(
+                                      child: switch (preview) {
+                                        StoryImage image =>
+                                          _illustrationPanel(image),
+                                        StoryMusic music => _musicPanel(music),
+                                        _ => _panel(
+                                            'ILLUSTRATION',
+                                            const SizedBox(),
+                                            color: theme['illustration'],
+                                          ),
+                                      },
+                                    ),
+                                  ],
                                 ],
                               )
                             : _statusPanel(),
@@ -450,9 +500,9 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
             const SizedBox(height: 1),
             Expanded(flex: 2, child: _interactionPanel()),
             const SizedBox(height: 1),
-            const Text(
+            Text(
                 '↑↓/J K choose   Enter select   PgUp/PgDn story   S/F force roll   Q quit',
-                style: TextStyle(color: Colors.brightBlack)),
+                style: TextStyle(color: theme['muted'])),
           ],
         ),
       ),

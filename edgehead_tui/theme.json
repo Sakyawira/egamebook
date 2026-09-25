@@ -1,0 +1,16 @@
+{
+  "story": "#8BB3F4",
+  "status": "#8BD5CA",
+  "illustration": "#A3EFB2",
+  "music": "#A3EFE4",
+  "choices": "#F1D589",
+  "roll": "#F1D589",
+  "title": "#A3EFE4",
+  "text": "#F8F8F2",
+  "muted": "#626875",
+  "selected": "#FFEAAA",
+  "error": "#FF8B94",
+  "warning": "#FFEAAA",
+  "spectrumHigh": "#A3EFE4",
+  "spectrumLow": "#A3EFB2"
+}

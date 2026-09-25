@@ -1,7 +1,7 @@
 # Edgehead TUI
 
 A full-screen terminal interface for Edgehead. It uses the existing Dart game
-without changing its rules or story files.
+and reads preview cues from its story files.
 
 ## Run
 
@@ -12,28 +12,40 @@ dart pub get
 dart run bin/edgehead_tui.dart
 ```
 
-Story text can start a looping track with a Markdown music cue, for example
-`[music: Forest Intro](forest_intro.m4a)` at the start of the opening script.
-The TUI plays the named file from `assets/audio/` and shows live Cava bars in
-the Illustration pane. Install `mpv` and `cava` for this feature. Cava reads the
-audio output through CoreAudio tap on macOS or PipeWire on Linux; it does not
-draw directly to the terminal. An image cue stops the music and replaces Cava
-with the image. The bundled track can be regenerated with
-`python3 tools/generate_intro.py` and `ffmpeg`.
+Story text controls preview panels with these cues:
 
-Story passages can include Markdown images such as
-`![Illustration of Darg](darg.png)`. The TUI shows a caption in the story and,
-when space allows, opens a separate Illustration preview pane beneath Status.
-The pane uses the terminal's image protocol (iTerm2 or Kitty, with a Unicode
-fallback). A new image replaces the current preview. The sample goblin preview
-closes when the first goblin dies. Put image files in `assets/images/`, or pass
-another folder:
+```text
+[Music: forest_intro.m4a]
+[Illustration: goblin.png]
+[Close: Illustration]
+[Close: Music]
+```
+
+Each Illustration cue opens another image panel. A new Music cue replaces the
+current music panel and track. Illustration and Music panels can stay open
+together. `[Close: Illustration]` closes all image panels, `[Close: Music]`
+stops playback and removes Cava, and `[Close: All]` removes every preview.
+The panels stack beneath Status when the terminal has enough height. File names
+may contain spaces. Existing Markdown images such as `![Darg](darg.png)` still
+work and replace earlier image panels; legacy music links also work.
+
+Music files are read from `assets/audio/`, and images from `assets/images/`.
+Install `mpv` and `cava` for music and the live spectrum. Cava reads audio
+through CoreAudio tap on macOS or PipeWire on Linux. Images use the terminal's
+image protocol (iTerm2 or Kitty, with a Unicode fallback). The bundled track
+can be regenerated with `python3 tools/generate_intro.py` and `ffmpeg`.
+
+To use another image directory:
 
 ```sh
 dart run bin/edgehead_tui.dart --image-dir /path/to/story/images
 ```
 
 Use `--audio-dir /path/to/music` to load music cues from another directory.
+
+Colors are in `theme.json`. Edit its `#RRGGBB` values and restart the TUI, or
+pass a different file with `--theme /path/to/theme.json`. Missing keys use the
+built-in palette; the terminal still controls the background color.
 
 The source repository contains image references but does not include their
 artwork. A small sample `goblin.png`, rendered from `goblin.txt`, illustrates
