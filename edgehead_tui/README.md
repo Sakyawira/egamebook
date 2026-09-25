@@ -22,8 +22,10 @@ dart run bin/edgehead_tui.dart --image-dir /path/to/story/images
 ```
 
 The source repository contains image references but does not include their
-artwork. Until a referenced file is supplied, the TUI shows its description
-and filename. Images with full HTTP(S) URLs are also supported.
+artwork. A small sample `goblin.png`, rendered from `goblin.txt`, illustrates
+the first goblin encounter. Other missing images show their description and
+filename until artwork is supplied. Images with full HTTP(S) URLs are also
+supported.
 
 Use a terminal at least 80 columns wide for the two-panel layout.
 
