@@ -109,6 +109,12 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
           final playback = MusicPlayback(
             track: File.fromUri(
                 component.audioDirectory.uri.resolve(music.source)),
+            limitSpectrumRedraws: () =>
+                (Platform.environment['TERM_PROGRAM'] ?? '')
+                    .toLowerCase()
+                    .contains('iterm') &&
+                game.activePreviews.whereType<StoryImage>().any(
+                    (image) => !image.source.toLowerCase().endsWith('.txt')),
             onChanged: () {
               if (mounted && identical(_musicCue, music)) setState(() {});
             },

@@ -47,8 +47,28 @@ if [[ ! -f .dart_tool/package_config.json ]]; then
   dart pub get
 fi
 
-echo 'Compiling the latest .egb.txt story edits...'
-dart run build_runner build --delete-conflicting-outputs
+story_stamp="$game_dir/.dart_tool/edgehead_story_build.stamp"
+story_generated="$game_dir/lib/writers_input.compiled.dart"
+needs_story_build=false
+if [[ "${1:-}" == '--build-only' || ! -f "$story_stamp" || ! -f "$story_generated" ]]; then
+  needs_story_build=true
+elif [[ "$game_dir/pubspec.yaml" -nt "$story_stamp" ||
+        "$game_dir/pubspec.lock" -nt "$story_stamp" ||
+        "$game_dir/build.yaml" -nt "$story_stamp" ||
+        "$game_dir/.dart_tool/package_config.json" -nt "$story_stamp" ||
+        "$tui_dir/../egamebook_builder/pubspec.yaml" -nt "$story_stamp" ]]; then
+  needs_story_build=true
+elif [[ -n "$(find "$game_dir/assets/text" "$game_dir/lib" \
+    "$tui_dir/../egamebook_builder/lib" -type f -newer "$story_stamp" \
+    -print -quit)" ]]; then
+  needs_story_build=true
+fi
+
+if [[ "$needs_story_build" == true ]]; then
+  echo 'Compiling the latest .egb.txt story edits...'
+  dart run build_runner build --delete-conflicting-outputs
+  touch "$story_stamp"
+fi
 
 if [[ "${1:-}" == '--build-only' ]]; then
   echo 'Story compiled. Restart the TUI to load it.'

@@ -56,9 +56,9 @@ build command, run from `edgehead/`, is:
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-On the first launch, or after Dart source or generated story code changes, the
-launcher compiles a TUI executable in `.dart_tool/`. Later launches reuse it,
-so the game starts without `dart run` compiling the large story at startup.
+On the first launch, or after story or Dart source changes, the launcher builds
+the story and compiles a TUI executable in `.dart_tool/`. Later launches reuse
+both, so the game starts without recompiling on every run.
 
 For repeated edits, `dart run build_runner watch --delete-conflicting-outputs`
 keeps the generated code up to date; the TUI still needs a restart to load it.
