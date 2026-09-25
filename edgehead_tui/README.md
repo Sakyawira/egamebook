@@ -29,8 +29,17 @@ The panels stack beneath Status when the terminal has enough height. File names
 may contain spaces. Existing Markdown images such as `![Darg](darg.png)` still
 work and replace earlier image panels; legacy music links also work.
 
-After editing an `edgehead/assets/text/**/*.egb.txt` story file, rebuild the
-generated story code from the `edgehead/` directory and restart the TUI:
+After editing an `edgehead/assets/text/**/*.egb.txt` story file, quit the TUI
+and run this from `edgehead_tui/` to compile your latest local edits and start
+the game again:
+
+```sh
+./run_latest.sh
+```
+
+Use `./run_latest.sh --build-only` to compile without starting the TUI. The
+script does not pull from Git or change your story files. The equivalent manual
+build command, run from `edgehead/`, is:
 
 ```sh
 dart run build_runner build --delete-conflicting-outputs
