@@ -5,10 +5,15 @@ import 'dart:io';
 /// Plays a story-selected track and reads Cava's raw spectrum without writing to
 /// the terminal. The TUI owns drawing the bars inside its preview pane.
 class MusicPlayback {
-  MusicPlayback({required this.track, required this.onChanged});
+  MusicPlayback({
+    required this.track,
+    required this.onChanged,
+    this.limitSpectrumRedraws,
+  });
 
   final File track;
   final void Function() onChanged;
+  final bool Function()? limitSpectrumRedraws;
 
   List<int> levels = List<int>.filled(24, 0);
   String? message;
@@ -19,6 +24,7 @@ class MusicPlayback {
   String? _cavaError;
   bool _stopped = false;
   Future<void>? _startFuture;
+  DateTime? _lastSpectrumRedraw;
 
   Future<void> start() => _startFuture ??= _start();
 
@@ -136,6 +142,17 @@ frame_delimiter = 10
     final parsed = values.map(int.tryParse).toList();
     if (parsed.any((value) => value == null)) return;
     levels = parsed.map((value) => value!.clamp(0, 1000)).toList();
+    if (limitSpectrumRedraws?.call() ?? false) {
+      final now = DateTime.now();
+      if (_lastSpectrumRedraw != null &&
+          now.difference(_lastSpectrumRedraw!) <
+              const Duration(milliseconds: 200)) {
+        return;
+      }
+      _lastSpectrumRedraw = now;
+    } else {
+      _lastSpectrumRedraw = null;
+    }
     onChanged();
   }
 
@@ -158,7 +175,15 @@ frame_delimiter = 10
   Future<void> stopAndWait() async {
     stop();
     final starting = _startFuture;
-    if (starting != null) await starting;
+    if (starting != null) {
+      try {
+        await starting.timeout(const Duration(seconds: 2));
+      } on TimeoutException {
+        // A stalled CoreAudio/PipeWire startup must not hold the terminal open.
+        // _start() will kill a late child as soon as it starts because _stopped
+        // is already true.
+      }
+    }
     await Future.wait([
       if (_player case final player?) _waitForExit(player),
       if (_cava case final cava?) _waitForExit(cava),
