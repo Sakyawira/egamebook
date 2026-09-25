@@ -32,6 +32,10 @@ After editing an `edgehead/assets/text/**/*.egb.txt` story file, quit the TUI
 and run `./run_latest.sh` again to compile your latest local edits and start
 the game.
 
+Neovim highlighting and a `:EgbBuild` command for these story files are in
+[`editor/nvim`](../editor/nvim/README.md). The command saves the open story,
+compiles it, and reports errors in quickfix. Restart the TUI to load the result.
+
 Use `./run_latest.sh --build-only` to compile without starting the TUI. The
 script does not pull from Git or change your story files. The equivalent manual
 build command, run from `edgehead/`, is:
