@@ -25506,7 +25506,7 @@ final Room meadowFight = Room(
     final ifBlock_781966055 =
         c.isHurt(tamaraId) ? '''She slowly stands up, and shrugs.''' : '''''';
     s.add(
-      '[Close: Illustration]\n[Close: Music]\n\n',
+      '[Close: Illustration]\n\n',
       isRaw: true,
     );
     w.updateActorById(firstGoblinId, (b) => b.initiative = 10);

@@ -22,7 +22,6 @@ GROUND_MATERIAL: {earth|dirt}
 
 AFTER_MONSTERS_CLEARED:
 [Close: Illustration]
-[Close: Music]
 
 [[CODE]]
 // The goblin might have started this fight but we should make sure that he has normal initiative going forward (in case the player raises him from the dead).

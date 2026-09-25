@@ -212,17 +212,15 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
   Component _panel(String title, Component body, {Color? color}) {
     final panelColor = color ?? theme['story'];
     return Container(
-      padding: const EdgeInsets.all(1),
-      decoration: BoxDecoration(border: BoxBorder.all(color: panelColor)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(title,
-              style: TextStyle(color: panelColor, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 1),
-          Expanded(child: body),
-        ],
+      padding: const EdgeInsets.symmetric(horizontal: 1),
+      decoration: BoxDecoration(
+        border: BoxBorder.all(color: panelColor),
+        title: BorderTitle(
+          text: title,
+          style: TextStyle(color: panelColor, fontWeight: FontWeight.bold),
+        ),
       ),
+      child: body,
     );
   }
 
@@ -310,15 +308,12 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
   Component _illustrationPanel(StoryImage illustration) {
     return _panel(
       'ILLUSTRATION',
-      Container(
-        padding: const EdgeInsets.all(1),
-        child: LayoutBuilder(
-          builder: (context, constraints) => Align(
-            child: _storyImage(
-              illustration.description,
-              illustration.source,
-              constraints.maxHeight.floor(),
-            ),
+      LayoutBuilder(
+        builder: (context, constraints) => Align(
+          child: _storyImage(
+            illustration.description,
+            illustration.source,
+            constraints.maxHeight.floor(),
           ),
         ),
       ),

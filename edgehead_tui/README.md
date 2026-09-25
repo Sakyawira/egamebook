@@ -29,6 +29,16 @@ The panels stack beneath Status when the terminal has enough height. File names
 may contain spaces. Existing Markdown images such as `![Darg](darg.png)` still
 work and replace earlier image panels; legacy music links also work.
 
+After editing an `edgehead/assets/text/**/*.egb.txt` story file, rebuild the
+generated story code from the `edgehead/` directory and restart the TUI:
+
+```sh
+dart run build_runner build --delete-conflicting-outputs
+```
+
+For repeated edits, `dart run build_runner watch --delete-conflicting-outputs`
+keeps the generated code up to date; the TUI still needs a restart to load it.
+
 Music files are read from `assets/audio/`, and images from `assets/images/`.
 Install `mpv` and `cava` for music and the live spectrum. Cava reads audio
 through CoreAudio tap on macOS or PipeWire on Linux. Images use the terminal's
