@@ -8,8 +8,7 @@ and reads preview cues from its story files.
 From this directory, run:
 
 ```sh
-dart pub get
-dart run bin/edgehead_tui.dart
+./run_latest.sh
 ```
 
 Story text controls preview panels with these cues:
@@ -30,12 +29,8 @@ may contain spaces. Existing Markdown images such as `![Darg](darg.png)` still
 work and replace earlier image panels; legacy music links also work.
 
 After editing an `edgehead/assets/text/**/*.egb.txt` story file, quit the TUI
-and run this from `edgehead_tui/` to compile your latest local edits and start
-the game again:
-
-```sh
-./run_latest.sh
-```
+and run `./run_latest.sh` again to compile your latest local edits and start
+the game.
 
 Use `./run_latest.sh --build-only` to compile without starting the TUI. The
 script does not pull from Git or change your story files. The equivalent manual
@@ -44,6 +39,10 @@ build command, run from `edgehead/`, is:
 ```sh
 dart run build_runner build --delete-conflicting-outputs
 ```
+
+On the first launch, or after Dart source or generated story code changes, the
+launcher compiles a TUI executable in `.dart_tool/`. Later launches reuse it,
+so the game starts without `dart run` compiling the large story at startup.
 
 For repeated edits, `dart run build_runner watch --delete-conflicting-outputs`
 keeps the generated code up to date; the TUI still needs a restart to load it.

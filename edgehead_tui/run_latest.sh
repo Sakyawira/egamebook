@@ -27,5 +27,25 @@ if [[ ! -f .dart_tool/package_config.json ]]; then
   dart pub get
 fi
 
+binary="$tui_dir/.dart_tool/edgehead_tui"
+needs_compile=false
+if [[ ! -x "$binary" ]]; then
+  needs_compile=true
+elif [[ "$tui_dir/pubspec.yaml" -nt "$binary" ||
+        "$tui_dir/.dart_tool/package_config.json" -nt "$binary" ||
+        "$game_dir/pubspec.yaml" -nt "$binary" ||
+        "$game_dir/.dart_tool/package_config.json" -nt "$binary" ]]; then
+  needs_compile=true
+elif [[ -n "$(find "$tui_dir/bin" "$tui_dir/lib" "$game_dir/lib" \
+    "$tui_dir/../egamebook_builder/lib" -type f -name '*.dart' \
+    -newer "$binary" -print -quit)" ]]; then
+  needs_compile=true
+fi
+
+if [[ "$needs_compile" == true ]]; then
+  echo 'Compiling TUI executable (first run or story/code changed)...'
+  dart compile exe bin/edgehead_tui.dart -o "$binary"
+fi
+
 echo 'Starting Edgehead TUI with the updated story...'
-exec dart run bin/edgehead_tui.dart "$@"
+exec "$binary" "$@"
