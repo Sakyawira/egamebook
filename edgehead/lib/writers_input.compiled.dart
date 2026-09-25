@@ -24661,7 +24661,7 @@ final startInkInk = InkAst([
     final WorldStateBuilder w = c.outputWorld;
     final Storyline s = c.outputStoryline;
     s.add(
-      '[Music: haunting_intro.m4a]\n',
+      '[Music: forest_intro.m4a]\n',
       isRaw: true,
     );
   }),
@@ -24673,7 +24673,7 @@ final startInkInk = InkAst([
     final WorldStateBuilder w = c.outputWorld;
     final Storyline s = c.outputStoryline;
     s.add(
-      'I am finally here, in the ancient ruins of San Francisco. I have reached my destination at last. My brother is here, somewhere in this dense forest, among fragments of a long-lost civilization.\n',
+      'I am finally here, in the ancient town of Grimfall. I have reached my destination at last. My missing wife sent me a letter that says she is here, somewhere in this dense-fog covered town, among fragments of its long-lost glory of bygone times.\n',
       isRaw: true,
     );
   }),

@@ -23,10 +23,9 @@ FOR_LOCATION: $start_bogus_location
 COMMAND: N/A
 
 INK:
-[Music: haunting_intro.m4a]
+[Music: forest_intro.m4a]
 
-I am finally here, in the ancient ruins of San Francisco. I have reached my destination at last. My brother is here, somewhere in this dense forest, among fragments of a long-lost civilization.
-
+I am finally here, in the ancient town of Grimfall. I have reached my destination at last. My missing wife sent me a letter that says she is here, somewhere in this dense-fog covered town, among fragments of its long-lost glory of bygone times.
 
 * I am a young woman >> ... with black hair >> ... and a hideous burn over the right side of my face. ((Others will be repulsed by the gruesome sight.))
 
