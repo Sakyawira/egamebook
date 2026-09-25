@@ -1,24 +1,41 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:edgehead/edgehead_lib.dart';
 import 'package:edgehead/egamebook/elements/elements.dart';
 import 'package:edgehead_tui/tui_presenter.dart';
 import 'package:nocterm/nocterm.dart';
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
+  if (args.isNotEmpty && (args.length != 2 || args.first != '--image-dir')) {
+    stderr.writeln('Usage: dart run bin/edgehead_tui.dart [--image-dir PATH]');
+    exitCode = 64;
+    return;
+  }
+  final imageDirectory = args.isEmpty
+      ? Directory.fromUri(Platform.script.resolve('../assets/images/'))
+      : Directory(args[1]).absolute;
   final presenter = TuiPresenter();
   await presenter.initialize(EdgeheadGame(randomizeAfterPlayerChoice: false));
   try {
-    await runApp(EdgeheadScreen(presenter: presenter), enableHotReload: false);
+    await runApp(
+      EdgeheadScreen(presenter: presenter, imageDirectory: imageDirectory),
+      enableHotReload: false,
+    );
   } finally {
     presenter.close();
   }
 }
 
 class EdgeheadScreen extends StatefulComponent {
-  const EdgeheadScreen({required this.presenter, super.key});
+  const EdgeheadScreen({
+    required this.presenter,
+    required this.imageDirectory,
+    super.key,
+  });
 
   final TuiPresenter presenter;
+  final Directory imageDirectory;
 
   @override
   State<EdgeheadScreen> createState() => _EdgeheadScreenState();
@@ -126,12 +143,49 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
       ListView.builder(
         controller: _storyScroll,
         itemCount: game.story.length,
-        itemBuilder: (context, index) => Container(
-          padding: const EdgeInsets.only(bottom: 1),
-          child: Text(game.story[index]),
-        ),
+        itemBuilder: (context, index) {
+          final entry = game.story[index];
+          return Container(
+            padding: const EdgeInsets.only(bottom: 1),
+            child: switch (entry) {
+              StoryText(:final text) => Text(text),
+              StoryImage(:final description, :final source) =>
+                _storyImage(description, source),
+            },
+          );
+        },
       ),
     );
+  }
+
+  Component _storyImage(String description, String source) {
+    final uri = Uri.tryParse(source);
+    final fallback = Text('[Illustration: $description] ($source)');
+    final Component image;
+    if (uri != null && (uri.scheme == 'https' || uri.scheme == 'http')) {
+      // Nocterm's image widget is experimental, but it owns terminal redraws.
+      // ignore: experimental_member_use
+      image = Image.network(
+        source,
+        height: 12,
+        placeholder: Text('Loading illustration: $description'),
+        errorWidget: fallback,
+      );
+    } else {
+      if (uri != null && uri.hasScheme && uri.scheme != 'file') {
+        return fallback;
+      }
+      final file = File.fromUri(component.imageDirectory.uri.resolve(source));
+      if (!file.existsSync()) return fallback;
+      // ignore: experimental_member_use
+      image = Image.file(
+        file.path,
+        height: 12,
+        placeholder: Text('Loading illustration: $description'),
+        errorWidget: fallback,
+      );
+    }
+    return SizedBox(height: 12, child: image);
   }
 
   Component _statusPanel() {

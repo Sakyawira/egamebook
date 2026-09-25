@@ -12,6 +12,19 @@ dart pub get
 dart run bin/edgehead_tui.dart
 ```
 
+Story passages can include Markdown images such as
+`![Illustration of Darg](darg.png)`. The TUI displays one when the game emits
+that passage, using the terminal's image protocol (iTerm2 or Kitty, with a
+Unicode fallback). Put image files in `assets/images/`, or pass another folder:
+
+```sh
+dart run bin/edgehead_tui.dart --image-dir /path/to/story/images
+```
+
+The source repository contains image references but does not include their
+artwork. Until a referenced file is supplied, the TUI shows its description
+and filename. Images with full HTTP(S) URLs are also supported.
+
 Use a terminal at least 80 columns wide for the two-panel layout.
 
 | Key | Action |

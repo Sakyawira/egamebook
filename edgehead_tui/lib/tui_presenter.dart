@@ -6,11 +6,30 @@ import 'package:edgehead/egamebook/commands/commands.dart';
 import 'package:edgehead/egamebook/elements/elements.dart';
 import 'package:edgehead/egamebook/presenter.dart';
 
+sealed class StoryEntry {
+  const StoryEntry();
+}
+
+class StoryText extends StoryEntry {
+  const StoryText(this.text);
+
+  final String text;
+}
+
+class StoryImage extends StoryEntry {
+  const StoryImage(this.description, this.source);
+
+  final String description;
+  final String source;
+}
+
 class TuiPresenter extends Presenter<EdgeheadGame> {
+  static final RegExp _markdownImage = RegExp(r'!\[([^\]]*)\]\(([^)\s]+)\)');
+
   final Random _rollRandom = Random();
   final Random _animationRandom = Random();
 
-  final List<String> story = [];
+  final List<StoryEntry> story = [];
   final Map<String, int> stats = {};
 
   void Function()? onChanged;
@@ -30,9 +49,22 @@ class TuiPresenter extends Presenter<EdgeheadGame> {
 
   void _appendStory(String text) {
     if (text.trim().isEmpty) return;
-    story.add(text.trim());
-    if (story.length > 200) story.removeAt(0);
+    var start = 0;
+    for (final match in _markdownImage.allMatches(text)) {
+      _appendStoryText(text.substring(start, match.start));
+      story.add(StoryImage(match.group(1)!, match.group(2)!));
+      start = match.end;
+    }
+    _appendStoryText(text.substring(start));
+    while (story.length > 200) {
+      story.removeAt(0);
+    }
     _changed();
+  }
+
+  void _appendStoryText(String text) {
+    final trimmed = text.trim();
+    if (trimmed.isNotEmpty) story.add(StoryText(trimmed));
   }
 
   void moveChoice(int delta) {
