@@ -24661,7 +24661,7 @@ final startInkInk = InkAst([
     final WorldStateBuilder w = c.outputWorld;
     final Storyline s = c.outputStoryline;
     s.add(
-      '[Music: forest_intro.m4a]\n',
+      '[Music: haunting_intro.m4a]\n',
       isRaw: true,
     );
   }),
@@ -24957,7 +24957,7 @@ final startInkInk = InkAst([
     final WorldStateBuilder w = c.outputWorld;
     final Storyline s = c.outputStoryline;
     s.add(
-      'I am also a necromancer. I can raise the dead, although not very well yet.\n',
+      'I am also a from a family of Psychic. Though I do not believe in such things. Not until the entirety of my family was sued to poverty for running such business. Not long after my father and mother got into a car accident. Some suggested that they took their own life, but the police can\'t prove it. Perhaps they were after the insurance money but went too far.\n',
       isRaw: true,
     );
   }),
@@ -24976,7 +24976,7 @@ final startInkInk = InkAst([
         ? '''his'''
         : '''her''';
     s.add(
-      'I am here with Tamara, the deserter. She is the hired sword for my expedition. It is unwise for a young necromancer to be traveling on ${ifBlock_a78affd5} own.\n',
+      'I am here with Amy, a local of the town. Which is weird cause I thought it was abandoned. But Amy said that she runs the dairy attached to the gas station. She offered to accompany me as I look around the town. She said it is unwise for a youth like me to be traveling on ${ifBlock_a78affd5} own.\n',
       isRaw: true,
     );
   }),
@@ -24988,7 +24988,7 @@ final startInkInk = InkAst([
     final WorldStateBuilder w = c.outputWorld;
     final Storyline s = c.outputStoryline;
     s.add(
-      'Tamara has just finished telling me, for the hundredth time, what a stupid idea it was to come here. I tell her there\'s nothing to worry about. The tales about goblins and orcs in the forests of San Francisco are exaggerated.\n',
+      'Amy has just finished telling me, for the hundredth time, what a strange thing to do, me visiting this town. I told her about the message from my wife, and she said she had no recolelction of running into anyone that resembles my description of her. "But then again, the town is pretty big."\n',
       isRaw: true,
     );
   }),
@@ -25000,7 +25000,7 @@ final startInkInk = InkAst([
     final WorldStateBuilder w = c.outputWorld;
     final Storyline s = c.outputStoryline;
     s.add(
-      'Then of course, a moment later, I\'m proven wrong.\n',
+      'A momment later. A screeching noise made us turn our heads towards a field, and there, barely visible as to obscured by the densed fog - a figure.\n',
       isRaw: true,
     );
   }),
@@ -25012,7 +25012,7 @@ final startInkInk = InkAst([
     final WorldStateBuilder w = c.outputWorld;
     final Storyline s = c.outputStoryline;
     s.add(
-      '[Illustration: goblin.png]\n',
+      '[Illustration: figure.txt]\n',
       isRaw: true,
     );
   }),

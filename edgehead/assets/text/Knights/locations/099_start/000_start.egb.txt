@@ -23,7 +23,7 @@ FOR_LOCATION: $start_bogus_location
 COMMAND: N/A
 
 INK:
-[Music: forest_intro.m4a]
+[Music: haunting_intro.m4a]
 
 I am finally here, in the ancient town of Grimfall. I have reached my destination at last. My missing wife sent me a letter that says she is here, somewhere in this dense-fog covered town, among fragments of its long-lost glory of bygone times.
 
@@ -138,16 +138,16 @@ c.recordCharacterChoice(1, 2, 2);
 -
 
 
-I am also a necromancer. I can raise the dead, although not very well yet.
+I am also a from a family of Psychic. Though I do not believe in such things. Not until the entirety of my family was sued to poverty for running such business. Not long after my father and mother got into a car accident. Some suggested that they took their own life, but the police can't prove it. Perhaps they were after the insurance money but went too far.
 
 // The IF ELSE statement in the following paragraph must build the outputWorld (instead of just using c.playerIsMale) because the custom event for 'player_is_male' was set earlier this action (it's not yet in originalWorld).
-I am here with Tamara, the deserter. She is the hired sword for my expedition. It is unwise for a young necromancer to be traveling on [[IF c.outputWorld.build().customHistory.query(name: 'player_is_male').hasHappened]]his[[ELSE]]her[[ENDIF]] own.
+I am here with Amy, a local of the town. Which is weird cause I thought it was abandoned. But Amy said that she runs the dairy attached to the gas station. She offered to accompany me as I look around the town. She said it is unwise for a youth like me to be traveling on [[IF c.outputWorld.build().customHistory.query(name: 'player_is_male').hasHappened]]his[[ELSE]]her[[ENDIF]] own.
 
-Tamara has just finished telling me, for the hundredth time, what a stupid idea it was to come here. I tell her there's nothing to worry about. The tales about goblins and orcs in the forests of San Francisco are exaggerated.
+Amy has just finished telling me, for the hundredth time, what a strange thing to do, me visiting this town. I told her about the message from my wife, and she said she had no recolelction of running into anyone that resembles my description of her. "But then again, the town is pretty big."
 
-Then of course, a moment later, I'm proven wrong.
+A momment later. A screeching noise made us turn our heads towards a field, and there, barely visible as to obscured by the densed fog - a figure.
 
-[Illustration: goblin.png]
+[Illustration: figure.txt]
 
 A goblin, bloodlust in his eyes, emerges from his hiding place to stand a few paces in front of us. I look around to see if there are more, but no. He is alone.
 
