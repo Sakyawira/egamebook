@@ -86,6 +86,7 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
   final ScrollController _choiceScroll = ScrollController();
   MusicPlayback? _musicPlayback;
   StoryMusic? _musicCue;
+  final Map<String, String?> _asciiArtCache = {};
   List<StoryEntry> _shownPreviews = [];
   List<StoryEntry?>? _clearingPreviews;
   bool _quitting = false;
@@ -263,7 +264,65 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
     );
   }
 
-  Component _storyImage(String description, String source, int height) {
+  String? _readAsciiArt(File file) {
+    return _asciiArtCache.putIfAbsent(file.path, () {
+      try {
+        if (file.lengthSync() > 64 * 1024) return null;
+        final lines = file
+            .readAsStringSync()
+            .replaceAll('\r\n', '\n')
+            .replaceAll('\r', '\n')
+            .replaceAll('\t', '    ')
+            .split('\n');
+        while (lines.isNotEmpty && lines.first.trim().isEmpty) {
+          lines.removeAt(0);
+        }
+        while (lines.isNotEmpty && lines.last.trim().isEmpty) {
+          lines.removeLast();
+        }
+        if (lines.isEmpty) return null;
+        final indent = lines
+            .where((line) => line.trim().isNotEmpty)
+            .map((line) => line.length - line.trimLeft().length)
+            .reduce((left, right) => left < right ? left : right);
+        return lines
+            .map((line) => line.length > indent ? line.substring(indent) : '')
+            .join('\n');
+      } on FileSystemException {
+        return null;
+      } on FormatException {
+        return null;
+      }
+    });
+  }
+
+  Component _asciiIllustration(
+      File file, int width, int height, Component fallback) {
+    final art = _readAsciiArt(file);
+    if (art == null) return fallback;
+    if (width <= 0 || height <= 0) return const SizedBox.shrink();
+
+    final lines = art.split('\n');
+    final artWidth = lines.fold<int>(
+        0, (widest, line) => line.length > widest ? line.length : widest);
+    final left = artWidth > width ? (artWidth - width) ~/ 2 : 0;
+    final top = lines.length > height ? (lines.length - height) ~/ 2 : 0;
+    final visible = lines.skip(top).take(height).map((line) {
+      if (line.length <= left) return '';
+      final end = line.length < left + width ? line.length : left + width;
+      return line.substring(left, end);
+    }).join('\n');
+
+    return Text(
+      visible,
+      style: TextStyle(color: theme['illustration']),
+      softWrap: false,
+      overflow: TextOverflow.clip,
+    );
+  }
+
+  Component _storyImage(
+      String description, String source, int width, int height) {
     final uri = Uri.tryParse(source);
     final fallback = Text('[Illustration: $description] ($source)',
         style: TextStyle(color: theme['muted']));
@@ -284,6 +343,9 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
       }
       final file = File.fromUri(component.imageDirectory.uri.resolve(source));
       if (!file.existsSync()) return fallback;
+      if (file.path.toLowerCase().endsWith('.txt')) {
+        return _asciiIllustration(file, width, height, fallback);
+      }
       // ignore: experimental_member_use
       image = Image.file(
         file.path,
@@ -325,6 +387,7 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
           child: _storyImage(
             illustration.description,
             illustration.source,
+            constraints.maxWidth.floor(),
             constraints.maxHeight.floor(),
           ),
         ),
@@ -495,6 +558,12 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
                                   for (final preview in visiblePreviews) ...[
                                     const SizedBox(height: 1),
                                     Expanded(
+                                      flex: preview is StoryImage &&
+                                              preview.source
+                                                  .toLowerCase()
+                                                  .endsWith('.txt')
+                                          ? 2
+                                          : 1,
                                       child: switch (preview) {
                                         StoryImage image =>
                                           _illustrationPanel(image),

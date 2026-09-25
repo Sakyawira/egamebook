@@ -23,14 +23,19 @@ Story text controls preview panels with these cues:
 ```text
 [Music: haunting_intro.m4a]
 [Illustration: goblin.png]
+[Illustration: goblin.txt]
 [Close: Illustration]
 [Close: Music]
 ```
 
-Each Illustration cue opens another image panel. A new Music cue replaces the
+Each Illustration cue opens another illustration panel. A new Music cue replaces the
 current music panel and track. Illustration and Music panels can stay open
-together. `[Close: Illustration]` closes all image panels, `[Close: Music]`
+together. `[Close: Illustration]` closes all illustration panels, `[Close: Music]`
 stops playback and removes Cava, and `[Close: All]` removes every preview.
+An illustration ending in `.txt` displays its ASCII art directly in the panel;
+PNG and other image files use the terminal image renderer. Illustration files
+are resolved relative to `assets/images/`. Text art keeps its spacing and is
+cropped within the panel if the terminal is too small.
 The panels stack beneath Status when the terminal has enough height. File names
 may contain spaces. Existing Markdown images such as `![Darg](darg.png)` still
 work and replace earlier image panels; legacy music links also work.
