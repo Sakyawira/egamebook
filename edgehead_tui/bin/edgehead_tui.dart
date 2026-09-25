@@ -254,7 +254,7 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
     );
   }
 
-  Component _storyImage(String description, String source) {
+  Component _storyImage(String description, String source, int height) {
     final uri = Uri.tryParse(source);
     final fallback = Text('[Illustration: $description] ($source)',
         style: TextStyle(color: theme['muted']));
@@ -264,6 +264,8 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
       // ignore: experimental_member_use
       image = Image.network(
         source,
+        height: height,
+        fit: BoxFit.contain,
         placeholder: Text('Loading illustration: $description'),
         errorWidget: fallback,
       );
@@ -276,6 +278,8 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
       // ignore: experimental_member_use
       image = Image.file(
         file.path,
+        height: height,
+        fit: BoxFit.contain,
         placeholder: Text('Loading illustration: $description'),
         errorWidget: fallback,
       );
@@ -307,8 +311,16 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
     return _panel(
       'ILLUSTRATION',
       Container(
-        padding: const EdgeInsets.all(2),
-        child: _storyImage(illustration.description, illustration.source),
+        padding: const EdgeInsets.all(1),
+        child: LayoutBuilder(
+          builder: (context, constraints) => Align(
+            child: _storyImage(
+              illustration.description,
+              illustration.source,
+              constraints.maxHeight.floor(),
+            ),
+          ),
+        ),
       ),
       color: theme['illustration'],
     );
