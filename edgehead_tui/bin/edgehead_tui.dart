@@ -47,6 +47,8 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
   final ScrollController _choiceScroll = ScrollController();
   late final OpeningMusic _openingMusic;
   bool _openingVisible = true;
+  StoryImage? _visibleIllustration;
+  bool _clearingIllustration = false;
 
   TuiPresenter get game => component.presenter;
 
@@ -61,11 +63,20 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
       },
     );
     game.onChanged = () {
-      if (_openingVisible &&
-          (game.activeIllustration != null || game.ending != null)) {
+      final illustration = game.activeIllustration;
+      if (_openingVisible && (illustration != null || game.ending != null)) {
         _openingVisible = false;
         _openingMusic.stop();
       }
+      if (_visibleIllustration != null && illustration == null) {
+        // Nocterm clears a native image after painting the next frame. Keep
+        // the preview's geometry for that frame, then let the story expand.
+        _clearingIllustration = true;
+        TerminalBinding.instance.addPostFrameCallback((_) {
+          if (mounted) setState(() => _clearingIllustration = false);
+        });
+      }
+      _visibleIllustration = illustration;
       if (mounted) setState(() {});
     };
     unawaited(_openingMusic.start());
@@ -229,7 +240,10 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
   Component _illustrationPanel(StoryImage illustration) {
     return _panel(
       'ILLUSTRATION',
-      _storyImage(illustration.description, illustration.source),
+      Container(
+        padding: const EdgeInsets.all(2),
+        child: _storyImage(illustration.description, illustration.source),
+      ),
       color: Colors.brightGreen,
     );
   }
@@ -360,9 +374,10 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final illustration = game.activeIllustration;
-                  final showPreview =
-                      (_openingVisible || illustration != null) &&
-                          constraints.maxHeight >= 18;
+                  final showPreview = (_openingVisible ||
+                          illustration != null ||
+                          _clearingIllustration) &&
+                      constraints.maxHeight >= 18;
                   final sidebarWidth = showPreview
                       ? (constraints.maxWidth * 0.36)
                           .clamp(30.0, 50.0)
@@ -382,9 +397,13 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
                                   SizedBox(height: 8, child: _statusPanel()),
                                   const SizedBox(height: 1),
                                   Expanded(
-                                    child: illustration == null
-                                        ? _musicPanel()
-                                        : _illustrationPanel(illustration),
+                                    child: illustration != null
+                                        ? _illustrationPanel(illustration)
+                                        : _clearingIllustration
+                                            ? _panel('ILLUSTRATION',
+                                                const SizedBox(),
+                                                color: Colors.brightGreen)
+                                            : _musicPanel(),
                                   ),
                                 ],
                               )
