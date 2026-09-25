@@ -3,24 +3,42 @@ import 'dart:io';
 
 import 'package:edgehead/edgehead_lib.dart';
 import 'package:edgehead/egamebook/elements/elements.dart';
-import 'package:edgehead_tui/opening_music.dart';
+import 'package:edgehead_tui/music_playback.dart';
 import 'package:edgehead_tui/tui_presenter.dart';
 import 'package:nocterm/nocterm.dart';
 
 Future<void> main(List<String> args) async {
-  if (args.isNotEmpty && (args.length != 2 || args.first != '--image-dir')) {
-    stderr.writeln('Usage: dart run bin/edgehead_tui.dart [--image-dir PATH]');
+  if (args.length.isOdd) {
+    stderr.writeln(
+        'Usage: dart run bin/edgehead_tui.dart [--image-dir PATH] [--audio-dir PATH]');
     exitCode = 64;
     return;
   }
-  final imageDirectory = args.isEmpty
-      ? Directory.fromUri(Platform.script.resolve('../assets/images/'))
-      : Directory(args[1]).absolute;
+  var imageDirectory =
+      Directory.fromUri(Platform.script.resolve('../assets/images/'));
+  var audioDirectory =
+      Directory.fromUri(Platform.script.resolve('../assets/audio/'));
+  for (var index = 0; index < args.length; index += 2) {
+    switch (args[index]) {
+      case '--image-dir':
+        imageDirectory = Directory(args[index + 1]).absolute;
+      case '--audio-dir':
+        audioDirectory = Directory(args[index + 1]).absolute;
+      default:
+        stderr.writeln('Unknown option: ${args[index]}');
+        exitCode = 64;
+        return;
+    }
+  }
   final presenter = TuiPresenter();
   await presenter.initialize(EdgeheadGame(randomizeAfterPlayerChoice: false));
   try {
     await runApp(
-      EdgeheadScreen(presenter: presenter, imageDirectory: imageDirectory),
+      EdgeheadScreen(
+        presenter: presenter,
+        imageDirectory: imageDirectory,
+        audioDirectory: audioDirectory,
+      ),
       enableHotReload: false,
     );
   } finally {
@@ -32,11 +50,13 @@ class EdgeheadScreen extends StatefulComponent {
   const EdgeheadScreen({
     required this.presenter,
     required this.imageDirectory,
+    required this.audioDirectory,
     super.key,
   });
 
   final TuiPresenter presenter;
   final Directory imageDirectory;
+  final Directory audioDirectory;
 
   @override
   State<EdgeheadScreen> createState() => _EdgeheadScreenState();
@@ -45,8 +65,8 @@ class EdgeheadScreen extends StatefulComponent {
 class _EdgeheadScreenState extends State<EdgeheadScreen> {
   final AutoScrollController _storyScroll = AutoScrollController();
   final ScrollController _choiceScroll = ScrollController();
-  late final OpeningMusic _openingMusic;
-  bool _openingVisible = true;
+  MusicPlayback? _musicPlayback;
+  StoryMusic? _musicCue;
   StoryImage? _visibleIllustration;
   bool _clearingIllustration = false;
 
@@ -55,18 +75,25 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
   @override
   void initState() {
     super.initState();
-    _openingMusic = OpeningMusic(
-      track: File.fromUri(
-          Platform.script.resolve('../assets/audio/forest_intro.m4a')),
-      onChanged: () {
-        if (mounted && _openingVisible) setState(() {});
-      },
-    );
     game.onChanged = () {
       final illustration = game.activeIllustration;
-      if (_openingVisible && (illustration != null || game.ending != null)) {
-        _openingVisible = false;
-        _openingMusic.stop();
+      final music = game.activeMusic;
+      if (!identical(_musicCue, music)) {
+        _musicPlayback?.stop();
+        _musicCue = music;
+        if (music == null) {
+          _musicPlayback = null;
+        } else {
+          final playback = MusicPlayback(
+            track: File.fromUri(
+                component.audioDirectory.uri.resolve(music.source)),
+            onChanged: () {
+              if (mounted && identical(_musicCue, music)) setState(() {});
+            },
+          );
+          _musicPlayback = playback;
+          unawaited(playback.start());
+        }
       }
       if (_visibleIllustration != null && illustration == null) {
         // Nocterm clears a native image after painting the next frame. Keep
@@ -79,13 +106,12 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
       _visibleIllustration = illustration;
       if (mounted) setState(() {});
     };
-    unawaited(_openingMusic.start());
     scheduleMicrotask(game.startBook);
   }
 
   @override
   void dispose() {
-    _openingMusic.stop();
+    _musicPlayback?.stop();
     game.onChanged = null;
     _storyScroll.dispose();
     _choiceScroll.dispose();
@@ -181,6 +207,10 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
                   '[Illustration: $description]',
                   style: const TextStyle(color: Colors.brightGreen),
                 ),
+              StoryMusic(:final title) => Text(
+                  '♫ $title',
+                  style: const TextStyle(color: Colors.brightCyan),
+                ),
             },
           );
         },
@@ -248,23 +278,25 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
     );
   }
 
-  Component _musicPanel() {
+  Component _musicPanel(StoryMusic music) {
+    final playback = _musicPlayback;
     return _panel(
       'ILLUSTRATION',
       Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('♫ FOREST INTRO',
-              style: TextStyle(color: Colors.brightCyan)),
+          Text('♫ ${music.title.toUpperCase()}',
+              style: const TextStyle(color: Colors.brightCyan)),
           const SizedBox(height: 1),
           Expanded(
-            child: _openingMusic.message == null
+            child: playback?.message == null
                 ? LayoutBuilder(
                     builder: (context, constraints) {
                       final width = constraints.maxWidth.floor();
                       final height = constraints.maxHeight.floor();
                       final bars = (width ~/ 2).clamp(1, 24);
-                      final levels = _openingMusic.levels;
+                      final levels =
+                          playback?.levels ?? List<int>.filled(24, 0);
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -289,7 +321,7 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
                       );
                     },
                   )
-                : Text(_openingMusic.message!),
+                : Text(playback!.message!),
           ),
           const Text('mpv · cava', style: TextStyle(color: Colors.brightBlack)),
         ],
@@ -374,7 +406,8 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final illustration = game.activeIllustration;
-                  final showPreview = (_openingVisible ||
+                  final music = game.activeMusic;
+                  final showPreview = (music != null ||
                           illustration != null ||
                           _clearingIllustration) &&
                       constraints.maxHeight >= 18;
@@ -403,7 +436,7 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
                                             ? _panel('ILLUSTRATION',
                                                 const SizedBox(),
                                                 color: Colors.brightGreen)
-                                            : _musicPanel(),
+                                            : _musicPanel(music!),
                                   ),
                                 ],
                               )

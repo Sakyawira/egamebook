@@ -23,6 +23,8 @@ FOR_LOCATION: $start_bogus_location
 COMMAND: N/A
 
 INK:
+[music: Forest Intro](forest_intro.m4a)
+
 I am finally here, in the ancient ruins of San Francisco. I have reached my destination at last. My brother is here, somewhere in this dense forest, among fragments of a long-lost civilization.
 
 

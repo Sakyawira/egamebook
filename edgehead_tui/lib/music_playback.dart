@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-/// Plays the opening track and reads Cava's raw spectrum without writing to
+/// Plays a story-selected track and reads Cava's raw spectrum without writing to
 /// the terminal. The TUI owns drawing the bars inside its preview pane.
-class OpeningMusic {
-  OpeningMusic({required this.track, required this.onChanged});
+class MusicPlayback {
+  MusicPlayback({required this.track, required this.onChanged});
 
   final File track;
   final void Function() onChanged;
@@ -21,7 +21,7 @@ class OpeningMusic {
 
   Future<void> start() async {
     if (!track.existsSync()) {
-      message = 'Opening track missing: ${track.path}';
+      message = 'Music file missing: ${track.path}';
       onChanged();
       return;
     }
@@ -51,7 +51,7 @@ class OpeningMusic {
         }
       }));
     } on ProcessException {
-      message = 'Install mpv to play the opening music';
+      message = 'Install mpv to play music';
       onChanged();
       return;
     }

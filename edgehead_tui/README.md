@@ -12,12 +12,14 @@ dart pub get
 dart run bin/edgehead_tui.dart
 ```
 
-The opening plays an original looping forest theme and shows live Cava bars in
+Story text can start a looping track with a Markdown music cue, for example
+`[music: Forest Intro](forest_intro.m4a)` at the start of the opening script.
+The TUI plays the named file from `assets/audio/` and shows live Cava bars in
 the Illustration pane. Install `mpv` and `cava` for this feature. Cava reads the
 audio output through CoreAudio tap on macOS or PipeWire on Linux; it does not
-draw directly to the terminal. The music and visualizer stop when the first
-story illustration appears, and the goblin image takes their place. The bundled
-track can be regenerated with `python3 tools/generate_intro.py` and `ffmpeg`.
+draw directly to the terminal. An image cue stops the music and replaces Cava
+with the image. The bundled track can be regenerated with
+`python3 tools/generate_intro.py` and `ffmpeg`.
 
 Story passages can include Markdown images such as
 `![Illustration of Darg](darg.png)`. The TUI shows a caption in the story and,
@@ -30,6 +32,8 @@ another folder:
 ```sh
 dart run bin/edgehead_tui.dart --image-dir /path/to/story/images
 ```
+
+Use `--audio-dir /path/to/music` to load music cues from another directory.
 
 The source repository contains image references but does not include their
 artwork. A small sample `goblin.png`, rendered from `goblin.txt`, illustrates

@@ -24,8 +24,18 @@ class StoryImage extends StoryEntry {
   final String source;
 }
 
+class StoryMusic extends StoryEntry {
+  const StoryMusic(this.title, this.source);
+
+  final String title;
+  final String source;
+}
+
 class TuiPresenter extends Presenter<EdgeheadGame> {
-  static final RegExp _markdownImage = RegExp(r'!\[([^\]]*)\]\(([^)\s]+)\)');
+  static final RegExp _mediaCue = RegExp(
+    r'!\[([^\]]*)\]\(([^)\s]+)\)|\[music:\s*([^\]]+)\]\(([^)\s]+)\)',
+    caseSensitive: false,
+  );
 
   final Random _rollRandom = Random();
   final Random _animationRandom = Random();
@@ -33,6 +43,9 @@ class TuiPresenter extends Presenter<EdgeheadGame> {
   final List<StoryEntry> story = [];
   final Map<String, int> stats = {};
   StoryImage? _activeIllustration;
+  StoryMusic? _activeMusic;
+
+  StoryMusic? get activeMusic => _activeMusic;
 
   StoryImage? get activeIllustration {
     final illustration = _activeIllustration;
@@ -62,11 +75,19 @@ class TuiPresenter extends Presenter<EdgeheadGame> {
   void _appendStory(String text) {
     if (text.trim().isEmpty) return;
     var start = 0;
-    for (final match in _markdownImage.allMatches(text)) {
+    for (final match in _mediaCue.allMatches(text)) {
       _appendStoryText(text.substring(start, match.start));
-      final illustration = StoryImage(match.group(1)!, match.group(2)!);
-      story.add(illustration);
-      _activeIllustration = illustration;
+      if (match.group(1) != null) {
+        final illustration = StoryImage(match.group(1)!, match.group(2)!);
+        story.add(illustration);
+        _activeIllustration = illustration;
+        _activeMusic = null;
+      } else {
+        final music = StoryMusic(match.group(3)!.trim(), match.group(4)!);
+        story.add(music);
+        _activeMusic = music;
+        _activeIllustration = null;
+      }
       start = match.end;
     }
     _appendStoryText(text.substring(start));
@@ -210,6 +231,7 @@ class TuiPresenter extends Presenter<EdgeheadGame> {
   void addWin(WinGame win) {
     ending = 'YOU WIN';
     _activeIllustration = null;
+    _activeMusic = null;
     _appendStory(win.markdownText);
   }
 
@@ -217,6 +239,7 @@ class TuiPresenter extends Presenter<EdgeheadGame> {
   void addLose(LoseGame lose) {
     ending = 'GAME OVER';
     _activeIllustration = null;
+    _activeMusic = null;
     _appendStory(lose.markdownText);
   }
 
