@@ -13,9 +13,12 @@ dart run bin/edgehead_tui.dart
 ```
 
 Story passages can include Markdown images such as
-`![Illustration of Darg](darg.png)`. The TUI displays one when the game emits
-that passage, using the terminal's image protocol (iTerm2 or Kitty, with a
-Unicode fallback). Put image files in `assets/images/`, or pass another folder:
+`![Illustration of Darg](darg.png)`. The TUI shows a caption in the story and,
+when space allows, opens a separate Illustration preview pane beneath Status.
+The pane uses the terminal's image protocol (iTerm2 or Kitty, with a Unicode
+fallback). A new image replaces the current preview. The sample goblin preview
+closes when the first goblin dies. Put image files in `assets/images/`, or pass
+another folder:
 
 ```sh
 dart run bin/edgehead_tui.dart --image-dir /path/to/story/images

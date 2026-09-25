@@ -149,8 +149,10 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
             padding: const EdgeInsets.only(bottom: 1),
             child: switch (entry) {
               StoryText(:final text) => Text(text),
-              StoryImage(:final description, :final source) =>
-                _storyImage(description, source),
+              StoryImage(:final description) => Text(
+                  '[Illustration: $description]',
+                  style: const TextStyle(color: Colors.brightGreen),
+                ),
             },
           );
         },
@@ -167,7 +169,6 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
       // ignore: experimental_member_use
       image = Image.network(
         source,
-        height: 12,
         placeholder: Text('Loading illustration: $description'),
         errorWidget: fallback,
       );
@@ -180,12 +181,11 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
       // ignore: experimental_member_use
       image = Image.file(
         file.path,
-        height: 12,
         placeholder: Text('Loading illustration: $description'),
         errorWidget: fallback,
       );
     }
-    return SizedBox(height: 12, child: image);
+    return image;
   }
 
   Component _statusPanel() {
@@ -198,7 +198,6 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
         children: [
           Text('Stamina  $stamina'),
           Text('Sanity   $sanity'),
-          const SizedBox(height: 1),
           if (game.ending != null)
             Text(game.ending!,
                 style: const TextStyle(color: Colors.brightYellow)),
@@ -207,6 +206,14 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
         ],
       ),
       color: Colors.cyan,
+    );
+  }
+
+  Component _illustrationPanel(StoryImage illustration) {
+    return _panel(
+      'ILLUSTRATION',
+      _storyImage(illustration.description, illustration.source),
+      color: Colors.brightGreen,
     );
   }
 
@@ -283,13 +290,38 @@ class _EdgeheadScreenState extends State<EdgeheadScreen> {
             const SizedBox(height: 1),
             Expanded(
               flex: 3,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(child: _storyPanel()),
-                  const SizedBox(width: 1),
-                  SizedBox(width: 23, child: _statusPanel()),
-                ],
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final illustration = game.activeIllustration;
+                  final showPreview =
+                      illustration != null && constraints.maxHeight >= 18;
+                  final sidebarWidth = showPreview
+                      ? (constraints.maxWidth * 0.36)
+                          .clamp(30.0, 50.0)
+                          .toDouble()
+                      : 23.0;
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(child: _storyPanel()),
+                      const SizedBox(width: 1),
+                      SizedBox(
+                        width: sidebarWidth,
+                        child: showPreview
+                            ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  SizedBox(height: 8, child: _statusPanel()),
+                                  const SizedBox(height: 1),
+                                  Expanded(
+                                      child: _illustrationPanel(illustration)),
+                                ],
+                              )
+                            : _statusPanel(),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
             const SizedBox(height: 1),

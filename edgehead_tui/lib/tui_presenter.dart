@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:edgehead/edgehead_lib.dart';
+import 'package:edgehead/edgehead_ids.dart';
 import 'package:edgehead/egamebook/commands/commands.dart';
 import 'package:edgehead/egamebook/elements/elements.dart';
 import 'package:edgehead/egamebook/presenter.dart';
@@ -31,6 +32,17 @@ class TuiPresenter extends Presenter<EdgeheadGame> {
 
   final List<StoryEntry> story = [];
   final Map<String, int> stats = {};
+  StoryImage? _activeIllustration;
+
+  StoryImage? get activeIllustration {
+    final illustration = _activeIllustration;
+    if (illustration?.source == 'goblin.png' &&
+        book?.world.wasKilled(firstGoblinId) == true) {
+      _activeIllustration = null;
+      return null;
+    }
+    return illustration;
+  }
 
   void Function()? onChanged;
   ChoiceBlock? choices;
@@ -52,7 +64,9 @@ class TuiPresenter extends Presenter<EdgeheadGame> {
     var start = 0;
     for (final match in _markdownImage.allMatches(text)) {
       _appendStoryText(text.substring(start, match.start));
-      story.add(StoryImage(match.group(1)!, match.group(2)!));
+      final illustration = StoryImage(match.group(1)!, match.group(2)!);
+      story.add(illustration);
+      _activeIllustration = illustration;
       start = match.end;
     }
     _appendStoryText(text.substring(start));
@@ -195,12 +209,14 @@ class TuiPresenter extends Presenter<EdgeheadGame> {
   @override
   void addWin(WinGame win) {
     ending = 'YOU WIN';
+    _activeIllustration = null;
     _appendStory(win.markdownText);
   }
 
   @override
   void addLose(LoseGame lose) {
     ending = 'GAME OVER';
+    _activeIllustration = null;
     _appendStory(lose.markdownText);
   }
 
