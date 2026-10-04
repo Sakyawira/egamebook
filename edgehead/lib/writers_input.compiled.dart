@@ -24661,7 +24661,7 @@ final startInkInk = InkAst([
     final WorldStateBuilder w = c.outputWorld;
     final Storyline s = c.outputStoryline;
     s.add(
-      '[Music: haunting_intro.m4a]\n',
+      '[Music: haunting_intro.m4a]\n[Illustration: grimfall.txt]\n',
       isRaw: true,
     );
   }),
